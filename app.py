@@ -2,15 +2,17 @@ import streamlit as st
 import random
 import time
 from dotenv import load_dotenv
-import openai
+from openai import AzureOpenAI
 import os
 
 load_dotenv()
 
-openai.api_type = "azure"
-openai.api_base = os.getenv("AZURE_OPENAI_API_ENDPOINT")
-openai.api_version = os.getenv("AZURE_OPENAI_API_VERSION")
-openai.api_key = os.getenv("AZURE_OPENAI_API_KEY")
+client = AzureOpenAI(
+    azure_endpoint=os.getenv("AZURE_OPENAI_API_ENDPOINT"),
+    api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+    api_version=os.getenv("AZURE_OPENAI_API_VERSION")
+)
+
 
 system_prompt = {"role":"system","content":"You are an AI assistant that helps people find information."}
 
@@ -40,8 +42,8 @@ if user_input := st.chat_input("What is up"):
         message_placeholder = st.empty()
         full_response = ""
 
-        for response in openai.ChatCompletion.create(
-            engine=os.environ.get("AZURE_OPENAI_API_DEPLOYMENT"),
+        response = client.chat.completions.create(
+            model=os.environ.get("AZURE_OPENAI_API_DEPLOYMENT"),
             messages=messages,
             temperature=0,
             max_tokens=2000,
@@ -50,11 +52,16 @@ if user_input := st.chat_input("What is up"):
             presence_penalty=0.0,
             stop=None,
             stream=True
-        ):
-            if response.choices and 'delta' in response.choices[0] and 'content' in response.choices[0].delta:
-                full_response += (response.choices[0].delta.content or "")
+        )
+
+        for chunk in response:
+            if chunk.choices[0].delta.content is not None:
+                full_response += (chunk.choices[0].delta.content or "")
                 message_placeholder.markdown(full_response + "▌")
 
+            # if response.choices and 'delta' in response.choices[0] and 'content' in response.choices[0].delta:
+            #     full_response += (response.choices[0].delta.content or "")
+            #     message_placeholder.markdown(full_response + "▌")
 
         message_placeholder.markdown(full_response)
 
