@@ -59,10 +59,6 @@ if user_input := st.chat_input("What is up"):
                 full_response += (chunk.choices[0].delta.content or "")
                 message_placeholder.markdown(full_response + "▌")
 
-            # if response.choices and 'delta' in response.choices[0] and 'content' in response.choices[0].delta:
-            #     full_response += (response.choices[0].delta.content or "")
-            #     message_placeholder.markdown(full_response + "▌")
-
         message_placeholder.markdown(full_response)
 
     st.session_state.messages.append({"role": "assistant", "content": full_response})
